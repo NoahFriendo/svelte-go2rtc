@@ -780,4 +780,4 @@
 	export let statusMode = '';
 </script>
 
-<video bind:this={video} autoplay muted />
+<video bind:this={video} {...$$props} />
