@@ -1,6 +1,9 @@
 {
 	"name": "svelte-go2rtc",
 	"version": "0.0.1",
+	"author": "NoahFriendo",
+	"license": "MIT",
+	"repository": "https://github.com/NoahFriendo/svelte-go2rtc",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build && npm run package",
