@@ -18,59 +18,63 @@
 		'opus' // OPUS Chrome, Firefox
 	];
 
-	/**
-	 * [config] Supported modes (webrtc, webrtc/tcp, mse, hls, mp4, mjpeg).
-	 * @type {string}
-	 */
-	const mode = 'webrtc,mse,hls,mjpeg';
+	let config = {
+		/**
+		 * [config] Supported modes (webrtc, webrtc/tcp, mse, hls, mp4, mjpeg).
+		 * @type {string}
+		 */
+		mode: 'webrtc,mse,hls,mjpeg',
 
-	/**
-	 * [Config] Requested medias (video, audio, microphone).
-	 * @type {string}
-	 */
-	const media = 'video,audio';
+		/**
+		 * [config] Requested medias (video, audio, microphone).
+		 * @type {string}
+		 */
+		media: 'video,audio',
 
-	/**
-	 * [config] Run stream when not displayed on the screen. Default `false`.
-	 * @type {boolean}
-	 */
-	const background = false;
+		/**
+		 * [config] Run stream when not displayed on the screen. Default `false`.
+		 * @type {boolean}
+		 */
+		background: false,
 
-	/**
-	 * [config] Run stream only when player in the viewport. Stop when user scroll out player.
-	 * Value is percentage of visibility from `0` (not visible) to `1` (full visible).
-	 * Default `0` - disable;
-	 * @type {number}
-	 */
-	const visibilityThreshold = 0;
+		/**
+		 * [config] Run stream only when player in the viewport. Stop when user scroll out player.
+		 * Value is percentage of visibility from `0` (not visible) to `1` (full visible).
+		 * Default `0` - disable;
+		 * @type {number}
+		 */
+		visibilityThreshold: 0,
 
-	/**
-	 * [config] Run stream only when browser page on the screen. Stop when user change browser
-	 * tab or minimise browser windows.
-	 * @type {boolean}
-	 */
-	const visibilityCheck = true;
+		/**
+		 * [config] Run stream only when browser page on the screen. Stop when user change browser
+		 * tab or minimise browser windows.
+		 * @type {boolean}
+		 */
+		visibilityCheck: true,
 
-	/**
-	 * [config] WebRTC configuration
-	 * @type {RTCConfiguration}
-	 */
-	const pcConfig = {
-		iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-		// sdpSemantics: 'unified-plan',  // important for Chromecast 1
+		/**
+		 * [config] WebRTC configuration
+		 * @type {RTCConfiguration}
+		 */
+		pcConfig: {
+			iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+			// sdpSemantics: 'unified-plan',  // important for Chromecast 1
+		}
 	};
 
-	/**
-	 * [info] WebSocket connection state. Values: CONNECTING, OPEN, CLOSED
-	 * @type {number}
-	 */
-	let wsState = 3; //WebSocket.CLOSED;
+	export let info = {
+		/**
+		 * [info] WebSocket connection state. Values: CONNECTING, OPEN, CLOSED
+		 * @type {number}
+		 */
+		wsState: 3, //WebSocket.CLOSED;
 
-	/**
-	 * [info] WebRTC connection state.
-	 * @type {number}
-	 */
-	let pcState = 3; //WebSocket.CLOSED;
+		/**
+		 * [info] WebRTC connection state.
+		 * @type {number}
+		 */
+		pcState: 3 //WebSocket.CLOSED;
+	};
 
 	/**
 	 * @type {HTMLVideoElement}
@@ -175,7 +179,7 @@
 	/** @param {Function} isSupported */
 	function codecs(isSupported) {
 		return CODECS.filter(
-			(codec) => media.indexOf(codec.indexOf('vc1') > 0 ? 'video' : 'audio') >= 0
+			(codec) => config.media.indexOf(codec.indexOf('vc1') > 0 ? 'video' : 'audio') >= 0
 		)
 			.filter((codec) => isSupported(`video/mp4; codecs="${codec}"`))
 			.join();
@@ -210,8 +214,8 @@
 	 * document's DOM.
 	 */
 	function disconnectedCallback() {
-		if (background || disconnectTID) return;
-		if (wsState === WebSocket.CLOSED && pcState === WebSocket.CLOSED) return;
+		if (config.background || disconnectTID) return;
+		if (info.wsState === WebSocket.CLOSED && info.pcState === WebSocket.CLOSED) return;
 
 		disconnectTID = setTimeout(() => {
 			if (reconnectTID) {
@@ -229,7 +233,6 @@
 	 * Creates child DOM elements. Called automatically once on `connectedCallback`.
 	 */
 	function oninit() {
-		console.debug('stream.oninit');
 		dispatch('init');
 
 		if (!video) {
@@ -290,13 +293,12 @@
 	 * @return {boolean} true if the connection has started.
 	 */
 	function onconnect() {
-		console.debug('stream.onconnect');
 		dispatch('connect');
 
 		if (!wsURL || ws || pc) return false;
 
 		// CLOSED or CONNECTING => CONNECTING
-		wsState = WebSocket.CONNECTING;
+		info.wsState = WebSocket.CONNECTING;
 
 		connectTS = Date.now();
 
@@ -305,22 +307,20 @@
 		ws.addEventListener('open', () => onopen());
 		ws.addEventListener('close', () => onclose());
 
-		statusMode = 'loading';
-		dispatch('mode', statusMode);
+		dispatch('mode', 'loading');
 		return true;
 	}
 
 	function ondisconnect() {
-		console.debug('stream.ondisconnect');
 		dispatch('disconnect');
 
-		wsState = WebSocket.CLOSED;
+		info.wsState = WebSocket.CLOSED;
 		if (ws) {
 			ws.close();
 			ws = null;
 		}
 
-		pcState = WebSocket.CLOSED;
+		info.pcState = WebSocket.CLOSED;
 		if (pc) {
 			pc.getSenders().forEach((sender) => {
 				if (sender.track) sender.track.stop();
@@ -338,11 +338,10 @@
 	 * @returns {Array.<string>} of modes (mse, webrtc, etc.)
 	 */
 	function onopen() {
-		console.debug('stream.onopen');
 		dispatch('open');
 
 		// CONNECTING => OPEN
-		wsState = WebSocket.OPEN;
+		info.wsState = WebSocket.OPEN;
 
 		if (!ws) return [];
 
@@ -365,23 +364,29 @@
 		 */
 		const modes = [];
 
-		if (mode.indexOf('mse') >= 0 && ('MediaSource' in window || 'ManagedMediaSource' in window)) {
+		if (
+			config.mode.indexOf('mse') >= 0 &&
+			('MediaSource' in window || 'ManagedMediaSource' in window)
+		) {
 			modes.push('mse');
 			onmse();
-		} else if (mode.indexOf('hls') >= 0 && video?.canPlayType('application/vnd.apple.mpegurl')) {
+		} else if (
+			config.mode.indexOf('hls') >= 0 &&
+			video?.canPlayType('application/vnd.apple.mpegurl')
+		) {
 			modes.push('hls');
 			onhls();
-		} else if (mode.indexOf('mp4') >= 0) {
+		} else if (config.mode.indexOf('mp4') >= 0) {
 			modes.push('mp4');
 			onmp4();
 		}
 
-		if (mode.indexOf('webrtc') >= 0 && 'RTCPeerConnection' in window) {
+		if (config.mode.indexOf('webrtc') >= 0 && 'RTCPeerConnection' in window) {
 			modes.push('webrtc');
 			onwebrtc();
 		}
 
-		if (mode.indexOf('mjpeg') >= 0) {
+		if (config.mode.indexOf('mjpeg') >= 0) {
 			if (modes.length) {
 				onmessage['mjpeg'] = (/** @type {{ type: string; value: string | string[]; }} */ msg) => {
 					if (msg.type !== 'error' || msg.value.indexOf(modes[0]) !== 0) return;
@@ -394,18 +399,17 @@
 		}
 
 		onmessage['stream'] = (/** @type {{ type: string; value: any; }} */ msg) => {
-			console.debug('stream.onmessge', msg);
 			dispatch('message', msg);
 			switch (msg.type) {
 				case 'error':
-					statusError = msg.value;
+					// statusError = msg.value;
 					dispatch('error', msg.value);
 					break;
 				case 'mse':
 				case 'hls':
 				case 'mp4':
 				case 'mjpeg':
-					statusMode = msg.type.toUpperCase();
+					// statusMode = msg.type.toUpperCase();
 					dispatch('mode', msg.type);
 					break;
 			}
@@ -418,13 +422,12 @@
 	 * @return {boolean} true if reconnection has started.
 	 */
 	function onclose() {
-		console.debug('stream.onclose');
 		dispatch('close');
 
-		if (wsState === WebSocket.CLOSED) return false;
+		if (info.wsState === WebSocket.CLOSED) return false;
 
 		// CONNECTING, OPEN => CONNECTING
-		wsState = WebSocket.CONNECTING;
+		info.wsState = WebSocket.CONNECTING;
 		ws = null;
 
 		// reconnect no more than once every X seconds
@@ -504,10 +507,9 @@
 							sb.remove(start, end);
 							ms.setLiveSeekableRange(end, end + 15);
 						}
-						// console.debug("VideoRTC.buffered", start, end);
 					}
 				} catch (e) {
-					// console.debug(e);
+					console.error(e);
 				}
 			});
 
@@ -519,12 +521,11 @@
 					const b = new Uint8Array(data);
 					buf.set(b, bufLen);
 					bufLen += b.byteLength;
-					// console.debug("VideoRTC.buffer", b.byteLength, bufLen);
 				} else {
 					try {
 						sb.appendBuffer(data);
 					} catch (e) {
-						// console.debug(e);
+						console.error(e);
 					}
 				}
 			};
@@ -535,10 +536,10 @@
 		/**
 		 * @type {RTCPeerConnection | null}
 		 */
-		let pc = new RTCPeerConnection(pcConfig);
+		let pc = new RTCPeerConnection(config.pcConfig);
 
 		pc.addEventListener('icecandidate', (ev) => {
-			if (ev.candidate && mode.indexOf('webrtc/tcp') >= 0 && ev.candidate.protocol === 'udp')
+			if (ev.candidate && config.mode.indexOf('webrtc/tcp') >= 0 && ev.candidate.protocol === 'udp')
 				return;
 
 			const candidate = ev.candidate ? ev.candidate.toJSON().candidate : '';
@@ -555,7 +556,7 @@
 			} else if (pc?.connectionState === 'failed' || pc?.connectionState === 'disconnected') {
 				pc.close(); // stop next events
 
-				pcState = WebSocket.CLOSED;
+				info.pcState = WebSocket.CLOSED;
 				pc = null;
 
 				onconnect();
@@ -566,7 +567,7 @@
 		onmessage['webrtc'] = (/** @type {{ type: any; value: string; }} */ msg) => {
 			switch (msg.type) {
 				case 'webrtc/candidate':
-					if (mode.indexOf('webrtc/tcp') >= 0 && msg.value.indexOf(' udp ') > 0) return;
+					if (config.mode.indexOf('webrtc/tcp') >= 0 && msg.value.indexOf(' udp ') > 0) return;
 
 					pc?.addIceCandidate({ candidate: msg.value, sdpMid: '0' }).catch((er) => {
 						console.warn(er);
@@ -587,7 +588,7 @@
 			send({ type: 'webrtc/offer', value: offer.sdp });
 		});
 
-		pcState = WebSocket.CONNECTING;
+		info.pcState = WebSocket.CONNECTING;
 		pc = pc;
 	}
 
@@ -597,7 +598,7 @@
 	 */
 	async function createOffer(pc) {
 		try {
-			if (media.indexOf('microphone') >= 0) {
+			if (config.media.indexOf('microphone') >= 0) {
 				const media = await navigator.mediaDevices.getUserMedia({ audio: true });
 				media.getTracks().forEach((track) => {
 					pc.addTransceiver(track, { direction: 'sendonly' });
@@ -608,7 +609,7 @@
 		}
 
 		for (const kind of ['video', 'audio']) {
-			if (media.indexOf(kind) >= 0) {
+			if (config.media.indexOf(kind) >= 0) {
 				pc.addTransceiver(kind, { direction: 'recvonly' });
 			}
 		}
@@ -622,8 +623,6 @@
 	 * @param video2 {HTMLVideoElement}
 	 */
 	function onpcvideo(video2) {
-		console.debug('stream.onpcvideo');
-
 		if (pc) {
 			// Video+Audio > Video, H265 > H264, Video > Audio, WebRTC > MSE
 			let rtcPriority = 0,
@@ -652,15 +651,15 @@
 				video.srcObject = stream;
 				play();
 
-				pcState = WebSocket.OPEN;
+				info.pcState = WebSocket.OPEN;
 
-				wsState = WebSocket.CLOSED;
+				info.wsState = WebSocket.CLOSED;
 				if (ws) {
 					ws.close();
 					ws = null;
 				}
 			} else {
-				pcState = WebSocket.CLOSED;
+				info.pcState = WebSocket.CLOSED;
 				if (pc) {
 					pc.close();
 					pc = null;
@@ -670,8 +669,7 @@
 
 		video2.srcObject = null;
 
-		if (pcState !== WebSocket.CLOSED) {
-			statusMode = 'RTC';
+		if (info.pcState !== WebSocket.CLOSED) {
 			dispatch('mode', 'rtc');
 		}
 	}
@@ -768,16 +766,8 @@
 			oninit();
 		}
 	});
-
-	/**
-	 * @type {string}
-	 */
-	export let statusError = '';
-
-	/**
-	 * @type {string}
-	 */
-	export let statusMode = '';
 </script>
 
-<video bind:this={video} {...$$props} />
+<video bind:this={video} {...$$props}>
+	<track kind="captions" />
+</video>
