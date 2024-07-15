@@ -185,6 +185,25 @@
 			.join();
 	}
 
+	export function getDelay() {
+		console.debug('getDelay');
+		if (!video) return 0;
+		const buff = video.buffered;
+		if (buff.length > 0) {
+			return buff.end(buff.length - 1) - video.currentTime;
+		}
+		return 0;
+	}
+
+	export function seekToEnd() {
+		console.debug('seekToEnd');
+		if (!video) return;
+		const seek = video.seekable;
+		if (seek.length > 0) {
+			video.currentTime = seek.end(seek.length - 1);
+		}
+	}
+
 	/**
 	 * `CustomElement`. Invoked each time the custom element is appended into a
 	 * document-connected element.
@@ -197,10 +216,7 @@
 
 		// because video autopause on disconnected from DOM
 		if (video) {
-			const seek = video.seekable;
-			if (seek.length > 0) {
-				video.currentTime = seek.end(seek.length - 1);
-			}
+			seekToEnd();
 			play();
 		} else {
 			oninit();
