@@ -1,5 +1,7 @@
 # go2rtc Video Stream Component for Svelte
 
+[![NPM Version](https://img.shields.io/npm/v/svelte-go2rtc)](https://www.npmjs.com/package/svelte-go2rtc)
+
 This library provides a Svelte component to display a video stream from a [go2rtc](https://github.com/AlexxIT/go2rtc) server.
 The component was ported from [WebRTC Camera](https://github.com/AlexxIT/WebRTC).
 
